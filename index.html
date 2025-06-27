@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Global Time Zone Converter</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      padding: 1rem;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background elements */
+    .bg-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(1px);
+      opacity: 0.1;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .orb:nth-child(1) {
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle, #00d4ff, #0099cc);
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .orb:nth-child(2) {
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, #ff6b6b, #cc5555);
+      top: 60%;
+      right: 15%;
+      animation-delay: 2s;
+    }
+
+    .orb:nth-child(3) {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, #4ecdc4, #39a59c);
+      top: 80%;
+      left: 70%;
+      animation-delay: 4s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .main-container {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #00d4ff, #4ecdc4, #45b7d1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 1.1rem;
+      color: #a0a0a0;
+      margin-bottom: 3rem;
+      font-weight: 300;
+    }
+
+    .converter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .time-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .time-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .time-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 212, 255, 0.2);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    .time-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: #00d4ff;
+      font-weight: 600;
+    }
+
+    .time-display {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      margin: 1rem 0;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .date-display {
+      font-size: 1rem;
+      color: #a0a0a0;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select, input[type="time"] {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+      font-size: 1rem;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    select:focus, input[type="time"]:focus {
+      outline: none;
+      border-color: #00d4ff;
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    select option {
+      background: #1a1a2e;
+      color: #ffffff;
+    }
+
+    .controls {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .control-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    button {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00d4ff, #4ecdc4);
+      color: #000;
+      box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 212, 255, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .difference-display {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      margin-top: 2rem;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .difference-text {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .ahead { color: #4ecdc4; }
+    .behind { color: #ff6b6b; }
+    .same { color: #ffd93d; }
+
+    .timezone-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #a0a0a0;
+    }
+
+    .live-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #4ecdc4;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      .converter-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      .control-group {
+        grid-template-columns: 1fr;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .time-display {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="main-container">
+    <h1>Global Time Converter</h1>
+    <p class="subtitle">Compare time zones instantly with live updates</p>
+    
+    <div class="converter-grid">
+      <div class="time-card">
+        <h3>🇮🇳 Indian Standard Time</h3>
+        <div class="time-display" id="istTime">--:--:--</div>
+        <div class="date-display" id="istDate">Loading...</div>
+        <div class="timezone-info">
+          <span>UTC+5:30</span>
+          <span><span class="live-indicator"></span>Live</span>
+        </div>
+      </div>
+      
+      <div class="time-card">
+        <h3 id="selectedZoneName">🌎 Selected Time Zone</h3>
+        <div class="time-display" id="selectedTime">--:--:--</div>
+        <div class="date-display" id="selectedDate">Select a timezone</div>
+        <div class="timezone-info">
+          <span id="selectedOffset">UTC±0:00</span>
+          <span><span class="live-indicator"></span>Live</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <div>
+          <label>Select Time Zone</label>
+          <select id="timezone">
+            <option value="">Choose a timezone...</option>
+            <optgroup label="🇺🇸 United States">
+              <option value="America/Los_Angeles">Pacific Time (PT)</option>
+              <option value="America/Denver">Mountain Time (MT)</option>
+              <option value="America/Chicago">Central Time (CT)</option>
+              <option value="America/New_York">Eastern Time (ET)</option>
+            </optgroup>
+            <optgroup label="🇬🇧 Europe">
+              <option value="Europe/London">London (GMT)</option>
+              <option value="Europe/Paris">Paris (CET)</option>
+              <option value="Europe/Berlin">Berlin (CET)</option>
+              <option value="Europe/Rome">Rome (CET)</option>
+            </optgroup>
+            <optgroup label="🌏 Asia">
+              <option value="Asia/Tokyo">Tokyo (JST)</option>
+              <option value="Asia/Shanghai">Shanghai (CST)</option>
+              <option value="Asia/Dubai">Dubai (GST)</option>
+              <option value="Asia/Singapore">Singapore (SGT)</option>
+            </optgroup>
+            <optgroup label="🇦🇺 Australia">
+              <option value="Australia/Sydney">Sydney (AEDT)</option>
+              <option value="Australia/Melbourne">Melbourne (AEDT)</option>
+              <option value="Australia/Perth">Perth (AWST)</option>
+            </optgroup>
+          </select>
+        </div>
+        
+        <div>
+          <label>Custom Time (Optional)</label>
+          <input type="time" id="customTime" />
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="btn-primary" onclick="updateTimes()">Update Times</button>
+        <button class="btn-secondary" onclick="useCurrentTime()">Use Current Time</button>
+      </div>
+    </div>
+
+    <div class="difference-display" id="differenceDisplay">
+      <p>Select a timezone to see the time difference</p>
+    </div>
+  </div>
+
+  <script>
+    let updateInterval;
+    let currentSelectedZone = '';
+
+    function updateTimes() {
+      const selectedZone = document.getElementById('timezone').value;
+      const customTime = document.getElementById('customTime').value;
+      
+      if (!selectedZone) {
+        showDifference('Please select a timezone first', 'same');
+        return;
+      }
+
+      currentSelectedZone = selectedZone;
+      
+      let baseTime;
+      if (customTime) {
+        const now = new Date();
+        const [hours, minutes] = customTime.split(':');
+        baseTime = new Date(now);
+        baseTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      } else {
+        baseTime = new Date();
+      }
+
+      updateTimeDisplays(baseTime);
+      calculateDifference(baseTime, selectedZone);
+      
+      // Update zone name
+      const zoneName = getZoneName(selectedZone);
+      document.getElementById('selectedZoneName').textContent = zoneName;
+    }
+
+    function updateTimeDisplays(baseTime) {
+      // Update IST
+      const istOptions = {
+        timeZone: 'Asia/Kolkata',
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      };
+      
+      const istDateOptions = {
+        timeZone: 'Asia/Kolkata',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      };
+
+      document.getElementById('istTime').textContent = baseTime.toLocaleTimeString('en-US', istOptions);
+      document.getElementById('istDate').textContent = baseTime.toLocaleDateString('en-US', istDateOptions);
+
+      // Update selected timezone
+      if (currentSelectedZone) {
+        const selectedOptions = {
+          timeZone: currentSelectedZone,
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        };
+        
+        const selectedDateOptions = {
+          timeZone: currentSelectedZone,
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        };
+
+        document.getElementById('selectedTime').textContent = baseTime.toLocaleTimeString('en-US', selectedOptions);
+        document.getElementById('selectedDate').textContent = baseTime.toLocaleDateString('en-US', selectedDateOptions);
+        
+        // Update UTC offset
+        updateUTCOffset(baseTime, currentSelectedZone);
+      }
+    }
+
+    function updateUTCOffset(date, timeZone) {
+      const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+      const localTime = new Date(utcTime + getTimezoneOffset(date, timeZone) * 60000);
+      const offset = getTimezoneOffset(date, timeZone) / 60;
+      
+      const hours = Math.floor(Math.abs(offset));
+      const minutes = Math.abs(offset) % 1 * 60;
+      const sign = offset >= 0 ? '+' : '-';
+      
+      document.getElementById('selectedOffset').textContent = 
+        `UTC${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+
+    function getTimezoneOffset(date, timeZone) {
+      const utcDate = new Date(date.toLocaleString("en-US", {timeZone: "UTC"}));
+      const tzDate = new Date(date.toLocaleString("en-US", {timeZone: timeZone}));
+      return (tzDate.getTime() - utcDate.getTime()) / 60000;
+    }
+
+    function calculateDifference(baseTime, selectedZone) {
+      const istTime = new Date(baseTime.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+      const selectedTime = new Date(baseTime.toLocaleString("en-US", { timeZone: selectedZone }));
+      
+      const diffMinutes = (selectedTime - istTime) / (1000 * 60);
+      const diffHours = Math.abs(diffMinutes) / 60;
+      
+      let message, className;
+      
+      if (Math.abs(diffMinutes) < 1) {
+        message = "Both times are exactly the same!";
+        className = "same";
+      } else if (diffMinutes > 0) {
+        if (diffHours >= 1) {
+          const hours = Math.floor(diffHours);
+          const minutes = Math.round((diffHours - hours) * 60);
+          message = `Selected timezone is ${hours}h ${minutes}m ahead of IST`;
+        } else {
+          message = `Selected timezone is ${Math.round(diffMinutes)} minutes ahead of IST`;
+        }
+        className = "ahead";
+      } else {
+        if (diffHours >= 1) {
+          const hours = Math.floor(diffHours);
+          const minutes = Math.round((diffHours - hours) * 60);
+          message = `Selected timezone is ${hours}h ${minutes}m behind IST`;
+        } else {
+          message = `Selected timezone is ${Math.round(Math.abs(diffMinutes))} minutes behind IST`;
+        }
+        className = "behind";
+      }
+      
+      showDifference(message, className);
+    }
+
+    function showDifference(message, className) {
+      const display = document.getElementById('differenceDisplay');
+      display.innerHTML = `<p class="difference-text ${className}">${message}</p>`;
+    }
+
+    function getZoneName(zone) {
+      const zoneMap = {
+        'America/Los_Angeles': '🇺🇸 Pacific Time',
+        'America/Denver': '🇺🇸 Mountain Time',
+        'America/Chicago': '🇺🇸 Central Time',
+        'America/New_York': '🇺🇸 Eastern Time',
+        'Europe/London': '🇬🇧 London Time',
+        'Europe/Paris': '🇫🇷 Paris Time',
+        'Europe/Berlin': '🇩🇪 Berlin Time',
+        'Europe/Rome': '🇮🇹 Rome Time',
+        'Asia/Tokyo': '🇯🇵 Tokyo Time',
+        'Asia/Shanghai': '🇨🇳 Shanghai Time',
+        'Asia/Dubai': '🇦🇪 Dubai Time',
+        'Asia/Singapore': '🇸🇬 Singapore Time',
+        'Australia/Sydney': '🇦🇺 Sydney Time',
+        'Australia/Melbourne': '🇦🇺 Melbourne Time',
+        'Australia/Perth': '🇦🇺 Perth Time'
+      };
+      return zoneMap[zone] || '🌍 Selected Time Zone';
+    }
+
+    function useCurrentTime() {
+      document.getElementById('customTime').value = '';
+      updateTimes();
+    }
+
+    function startLiveUpdates() {
+      if (updateInterval) clearInterval(updateInterval);
+      
+      updateInterval = setInterval(() => {
+        if (currentSelectedZone) {
+          const customTime = document.getElementById('customTime').value;
+          if (!customTime) { // Only auto-update if no custom time is set
+            updateTimes();
+          }
+        } else {
+          // Just update IST if no timezone selected
+          updateTimeDisplays(new Date());
+        }
+      }, 1000);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateTimeDisplays(new Date());
+      startLiveUpdates();
+      
+      // Add event listeners
+      document.getElementById('timezone').addEventListener('change', updateTimes);
+      document.getElementById('customTime').addEventListener('change', updateTimes);
+    });
+  </script>
+</body>
+</html>
