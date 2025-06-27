@@ -341,11 +341,11 @@
     
     <div class="converter-grid">
       <div class="time-card">
-        <h3>🇮🇳 Indian Standard Time</h3>
+        <h3>📱 Your Local Time</h3>
         <div class="time-display" id="istTime">--:--:--</div>
         <div class="date-display" id="istDate">Loading...</div>
         <div class="timezone-info">
-          <span>UTC+5:30</span>
+          <span id="localOffset">Your timezone</span>
           <span><span class="live-indicator"></span>Live</span>
         </div>
       </div>
@@ -444,32 +444,35 @@
     }
 
     function updateTimeDisplays(baseTime) {
-      // Update IST
-      const istOptions = {
-        timeZone: 'Asia/Kolkata',
-        hour12: false,
-        hour: '2-digit',
+      // Get user's actual timezone (what their phone uses)
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Update Local Time (User's phone timezone)
+      const localOptions = {
+        timeZone: userTimeZone,
+        hour12: true,
+        hour: 'numeric',
         minute: '2-digit',
         second: '2-digit'
       };
       
-      const istDateOptions = {
-        timeZone: 'Asia/Kolkata',
+      const localDateOptions = {
+        timeZone: userTimeZone,
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       };
 
-      document.getElementById('istTime').textContent = baseTime.toLocaleTimeString('en-US', istOptions);
-      document.getElementById('istDate').textContent = baseTime.toLocaleDateString('en-US', istDateOptions);
+      document.getElementById('istTime').textContent = baseTime.toLocaleTimeString('en-US', localOptions);
+      document.getElementById('istDate').textContent = baseTime.toLocaleDateString('en-US', localDateOptions);
 
       // Update selected timezone
       if (currentSelectedZone) {
         const selectedOptions = {
           timeZone: currentSelectedZone,
-          hour12: false,
-          hour: '2-digit',
+          hour12: true,
+          hour: 'numeric',
           minute: '2-digit',
           second: '2-digit'
         };
@@ -510,10 +513,13 @@
     }
 
     function calculateDifference(baseTime, selectedZone) {
-      const istTime = new Date(baseTime.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+      // Get user's actual timezone
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      const localTime = new Date(baseTime.toLocaleString("en-US", { timeZone: userTimeZone }));
       const selectedTime = new Date(baseTime.toLocaleString("en-US", { timeZone: selectedZone }));
       
-      const diffMinutes = (selectedTime - istTime) / (1000 * 60);
+      const diffMinutes = (selectedTime - localTime) / (1000 * 60);
       const diffHours = Math.abs(diffMinutes) / 60;
       
       let message, className;
@@ -525,18 +531,18 @@
         if (diffHours >= 1) {
           const hours = Math.floor(diffHours);
           const minutes = Math.round((diffHours - hours) * 60);
-          message = `Selected timezone is ${hours}h ${minutes}m ahead of IST`;
+          message = `Selected timezone is ${hours}h ${minutes}m ahead of your local time`;
         } else {
-          message = `Selected timezone is ${Math.round(diffMinutes)} minutes ahead of IST`;
+          message = `Selected timezone is ${Math.round(diffMinutes)} minutes ahead of your local time`;
         }
         className = "ahead";
       } else {
         if (diffHours >= 1) {
           const hours = Math.floor(diffHours);
           const minutes = Math.round((diffHours - hours) * 60);
-          message = `Selected timezone is ${hours}h ${minutes}m behind IST`;
+          message = `Selected timezone is ${hours}h ${minutes}m behind your local time`;
         } else {
-          message = `Selected timezone is ${Math.round(Math.abs(diffMinutes))} minutes behind IST`;
+          message = `Selected timezone is ${Math.round(Math.abs(diffMinutes))} minutes behind your local time`;
         }
         className = "behind";
       }
@@ -593,6 +599,17 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
+      // Display user's actual timezone info
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const now = new Date();
+      const offset = -now.getTimezoneOffset() / 60;
+      const hours = Math.floor(Math.abs(offset));
+      const minutes = Math.abs(offset) % 1 * 60;
+      const sign = offset >= 0 ? '+' : '-';
+      
+      document.getElementById('localOffset').textContent = 
+        `${userTimeZone.split('/').pop()} (UTC${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')})`;
+      
       updateTimeDisplays(new Date());
       startLiveUpdates();
       
